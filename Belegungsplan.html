@@ -2007,7 +2007,15 @@
 
         if (val > 0) {
           let type = c.dataset.type;
-          let price = [...prices].find((p) => p.dataset.type === type).value;
+          let price = [...prices]
+            .find((p) => p.dataset.type === type)
+            .value
+            .trim();
+
+          if (!price) {
+            alert(`Bitte für ${type} einen Preis eingeben.`);
+            throw new Error("PRICE_REQUIRED");
+          }
 
           data.push({
             type,
@@ -2041,7 +2049,13 @@
         return alert("Abreise muss nach Anreise liegen");
       }
 
-      let data = collectGroupData();
+      let data;
+
+      try {
+        data = collectGroupData();
+      } catch (err) {
+        return;
+      }
       let floorPriority = document.getElementById("g_floorPriority").checked;
       let isOption = document.getElementById("g_option").checked;
 
@@ -3568,10 +3582,41 @@ window.onload = () => {
             `(bis ${endDate.toLocaleDateString("de-DE")})`;
         }
 
+        let displayRoomName = roomName;
+
+        if (consecutiveFreeNights === 1) {
+          let arrivalDate = new Date(base);
+          arrivalDate.setDate(base.getDate() + 1);
+
+          let nextArrival = bookings.find((b) => {
+            if (b.row !== rowIndex) return false;
+
+            let start = new Date(b.start);
+            start.setHours(0, 0, 0, 0);
+
+            return start.getTime() === arrivalDate.getTime();
+          });
+
+          if (nextArrival) {
+            let roomNumber = roomName.split(" - ")[0];
+            let originalType = roomName.split(" - ")[1] || "";
+
+            let futureType = nextArrival.guests;
+
+            // Balkon-Kennzeichnung immer übernehmen
+            if (originalType.includes("B") && !futureType.includes("B")) {
+              futureType += " B";
+            }
+
+            displayRoomName = `${roomNumber} - ${futureType}`;
+          }
+        }
+
+
         html += `
       <tr>
         <td>
-          ${roomName} - ${text}
+          ${displayRoomName} - ${text}
         </td>
       </tr>
     `;
@@ -4162,9 +4207,9 @@ ${isNaN(parseFloat(b.price))
 </td>
 
   <td>
-    <input type="checkbox" ${b.paid ? "checked" : ""}>
-    bezahlt
-  </td>
+  <input type="checkbox" ${b.paid ? "checked" : ""}>
+  bezahlt
+</td>
   ${isCheckInList
               ? `
       <td>
@@ -5311,7 +5356,12 @@ ${d.toLocaleDateString("de-DE", {
       let company = document.getElementById("f_company").value.trim();
       let start = new Date(document.getElementById("f_start").value);
       let end = new Date(document.getElementById("f_end").value);
-      let price = document.getElementById("f_price").value;
+      let price = document.getElementById("f_price").value.trim();
+
+      if (!price) {
+        return alert("Preis ist ein Pflichtfeld");
+      }
+
       let comment = document.getElementById("f_comment").value;
       let breakfast = document.getElementById("f_breakfast").checked;
 
@@ -7422,14 +7472,21 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       if (changedField === "total") {
 
+        let rawValue = totalField.value.trim();
+
         let total = parseFloat(
-          totalField.value.replace(",", ".")
+          rawValue.replace(",", ".")
         );
 
         if (!isNaN(total)) {
 
           priceField.value =
-            total / nights;
+            (total / nights).toFixed(2);
+
+        } else if (rawValue !== "") {
+
+          // Text direkt als Preis pro Nacht übernehmen
+          priceField.value = rawValue;
 
         }
 
