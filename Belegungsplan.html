@@ -1512,7 +1512,7 @@
       if (submitButton) submitButton.disabled = true;
 
       try {
-        const { data, error } = await supa.from("user_roles").select("email").ilike("username", username).single();
+        const {data, error} = await supa.from("user_roles").select("email").ilike("username", username).single();
 
         if (error || !data) {
           alert("Benutzer nicht gefunden");
@@ -1520,7 +1520,7 @@
           return;
         }
 
-        const { error: loginError } = await supa.auth.signInWithPassword({
+        const {error: loginError} = await supa.auth.signInWithPassword({
           email: data.email,
           password: password
         });
@@ -1544,12 +1544,12 @@
         .trim()
         .toLowerCase();
 
-      const { data: logs, error } = await supa
+      const {data: logs, error} = await supa
         .from("booking_logs")
         .select("*")
         .eq("field", "booking")
         .eq("new_value", "deleted")
-        .order("created_at", { ascending: false });
+        .order("created_at", {ascending: false});
 
       if (error) {
         console.error(error);
@@ -1677,10 +1677,10 @@
       content.innerHTML = "Lade...";
       box.style.display = "block";
 
-      const { data: logs, error } = await supa
+      const {data: logs, error} = await supa
         .from("booking_logs")
         .select("*")
-        .order("created_at", { ascending: false })
+        .order("created_at", {ascending: false})
         .limit(50);
 
 
@@ -1779,7 +1779,7 @@
     }
 
     async function loadGroups() {
-      let { data } = await supa.from("groups").select("*");
+      let {data} = await supa.from("groups").select("*");
 
       groupsMap = {};
       data.forEach((g) => {
@@ -1792,7 +1792,7 @@
     }
 
     async function loadUserMap() {
-      const { data, error } = await supa.from("user_roles").select("id, username");
+      const {data, error} = await supa.from("user_roles").select("id, username");
 
       if (error) {
         console.error("Fehler beim Laden der User", error);
@@ -2542,10 +2542,10 @@
       }
 
       if (errors.length > 0) {
-        return { ok: false, errors };
+        return {ok: false, errors};
       }
 
-      return { ok: true };
+      return {ok: true};
     }
 
     function canUseRoomForCheck(roomName, type) {
@@ -2660,7 +2660,7 @@
       const placement = groupPlacement;
       if (!placement || !placement.data) return;
 
-      let { start, end } = placement;
+      let {start, end} = placement;
 
       let counter = 0;
 
@@ -2733,7 +2733,7 @@
 
     async function loadUserRole() {
       const {
-        data: { user }
+        data: {user}
       } = await supa.auth.getUser();
 
       if (!user) {
@@ -2741,7 +2741,7 @@
         return;
       }
 
-      const { data, error } = await supa.from("user_roles").select("role").eq("id", user.id).single();
+      const {data, error} = await supa.from("user_roles").select("role").eq("id", user.id).single();
 
       if (error || !data) {
         console.warn("Keine Rolle gefunden → fallback read");
@@ -2878,7 +2878,7 @@
       if (!search) return;
 
       // Gruppen suchen
-      const { data: groups } = await supa
+      const {data: groups} = await supa
         .from("groups")
         .select("id,name")
         .ilike("name", `%${search}%`);
@@ -2901,8 +2901,8 @@
           );
       }
 
-      const { data: results, error } = await query
-        .order("start", { ascending: true })
+      const {data: results, error} = await query
+        .order("start", {ascending: true})
         .limit(500);
 
       if (error) {
@@ -3142,7 +3142,7 @@ extra Räume
         let base = ["Rezeption", "Toiletten", "Saal"];
 
         if (day === 1) {
-          base.push("Restaurant", "Fachwerk", "Schenke", "Backoffice", "Kegelbahn", "Treppenhaus");
+          base.push("Restaurant", "Fachwerk", "Schenke", "Backoffice", "Kegelbahn", "Treppenhaus", "Personaltoiletten", "Cheftoilette");
         }
 
         if (day === 3) {
@@ -3809,19 +3809,19 @@ window.onload = () => {
       // ✅ Personen erstellen
       let people = [];
 
-      for (let i = 0; i < staffCount; i++) { people.push({ neu: [], zuleger: [], kontrolle: [], extras: [] }); }
+      for (let i = 0; i < staffCount; i++) {people.push({neu: [], zuleger: [], kontrolle: [], extras: []});}
       function assignSequential(list, key) {
         if (!list.length) return; let perPerson = Math.ceil(list.length /
           people.length); let index = 0; people.forEach((p) => {
             for (let i = 0; i < perPerson; i++) {
               let item = list[index]; if (!item) break; if (key === "neu") {
-                p.neu.push({ room: rooms[item.row], booking: item });
+                p.neu.push({room: rooms[item.row], booking: item});
               } else if (key === "zul") {
                 p.zuleger.push({
                   room:
                     rooms[item.row], booking: item
                 });
-              } else { p.kontrolle.push(item); } index++;
+              } else {p.kontrolle.push(item);} index++;
             }
           });
       }
@@ -4107,7 +4107,7 @@ window.onload = () => {
           const g = groupsMap[b.group_id];
 
           if (!groupedByGroup[g.id]) {
-            groupedByGroup[g.id] = { name: g.name, list: [] };
+            groupedByGroup[g.id] = {name: g.name, list: []};
           }
 
           groupedByGroup[g.id].list.push(b);
@@ -4500,7 +4500,7 @@ window.onload = function() {
         }
       });
 
-      const monthName = lastMonthStart.toLocaleString("de-DE", { month: "long" });
+      const monthName = lastMonthStart.toLocaleString("de-DE", {month: "long"});
 
       showMonthlyStatsPopup(monthName, bookingsCount, nightsTotal);
     }
@@ -4672,12 +4672,12 @@ window.onload = function() {
       const weekUp = document.getElementById("weekUp");
       const weekDown = document.getElementById("weekDown");
       const {
-        data: { user }
+        data: {user}
       } = await supa.auth.getUser();
       currentUser = user;
 
       const {
-        data: { session }
+        data: {session}
       } = await supa.auth.getSession();
 
       if (session) {
@@ -4815,11 +4815,11 @@ window.onload = function() {
       box.style.display = "block";
       box.innerHTML = "Lade...";
 
-      const { data, error } = await supa
+      const {data, error} = await supa
         .from("booking_logs")
         .select("*")
         .eq("booking_id", bookingId)
-        .order("created_at", { ascending: false });
+        .order("created_at", {ascending: false});
 
       if (error) {
         box.innerHTML = "Fehler beim Laden";
@@ -5513,7 +5513,7 @@ ${d.toLocaleDateString("de-DE", {
             user_id: user?.id
           })
           .eq("id", b.id)
-          .then(async ({ error }) => {
+          .then(async ({error}) => {
             if (error) {
               console.error(error);
               alert("Fehler beim Speichern");
@@ -5572,27 +5572,27 @@ ${d.toLocaleDateString("de-DE", {
             }
 
             if (oldPet !== b.pet) {
-              changes.pet = { old: oldPet, new: b.pet };
+              changes.pet = {old: oldPet, new: b.pet};
             }
 
             if (oldPetCount !== b.pet_count) {
-              changes.pet_count = { old: oldPetCount, new: b.pet_count };
+              changes.pet_count = {old: oldPetCount, new: b.pet_count};
             }
 
             if (oldBlue !== b.bluecard) {
-              changes.bluecard = { old: oldBlue, new: b.bluecard };
+              changes.bluecard = {old: oldBlue, new: b.bluecard};
             }
 
             if (oldBlueCount !== b.bluecard_count) {
-              changes.bluecard_count = { old: oldBlueCount, new: b.bluecard_count };
+              changes.bluecard_count = {old: oldBlueCount, new: b.bluecard_count};
             }
 
             if (oldCrib !== b.crib) {
-              changes.crib = { old: oldCrib, new: b.crib };
+              changes.crib = {old: oldCrib, new: b.crib};
             }
 
             if (oldCribCount !== b.crib_count) {
-              changes.crib_count = { old: oldCribCount, new: b.crib_count };
+              changes.crib_count = {old: oldCribCount, new: b.crib_count};
             }
 
             if (Object.keys(changes).length > 0) {
@@ -6025,7 +6025,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       const user = currentUser;
 
-      const { error } = await supa
+      const {error} = await supa
         .from("bookings")
         .update({
           checkin: newVal,
@@ -6071,7 +6071,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       const user = currentUser;
 
-      const { error } = await supa
+      const {error} = await supa
         .from("bookings")
         .update({
           paid: newVal,
@@ -6278,7 +6278,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
           const user = currentUser;
 
-          const { error } = await supa
+          const {error} = await supa
             .from("bookings")
             .update({
               paid: newVal,
@@ -6328,7 +6328,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
           const user = currentUser;
 
-          const { error } = await supa
+          const {error} = await supa
             .from("bookings")
             .update({
               checkin: newVal,
@@ -6642,7 +6642,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
           isDeleting = true;
 
-          const { data, error } = await supa.from("bookings").delete().eq("id", id).select();
+          const {data, error} = await supa.from("bookings").delete().eq("id", id).select();
 
           if (error) {
             alert("Fehler beim Löschen");
@@ -6755,7 +6755,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         if (oldRow !== newRow) {
           const user = currentUser;
 
-          const { error } = await supa
+          const {error} = await supa
             .from("bookings")
             .update({
               row: newRow,
@@ -6891,7 +6891,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       if (changed) {
         const user = currentUser;
 
-        const { data, error } = await supa
+        const {data, error} = await supa
           .from("bookings")
           .update({
             start: b.start,
@@ -7077,7 +7077,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
             isResizingUpdate = true;
             const user = currentUser;
 
-            const { error } = await supa
+            const {error} = await supa
               .from("bookings")
               .update({
                 start: b.start,
@@ -7121,7 +7121,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
             isResizingUpdate = true;
             const user = currentUser;
 
-            const { error } = await supa
+            const {error} = await supa
               .from("bookings")
               .update({
                 end: b.end,
@@ -7167,7 +7167,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
           resizeEnd(ev);
           document.removeEventListener("mousemove", resizeMove);
         },
-        { once: true }
+        {once: true}
       );
 
       document.addEventListener("mousemove", resizeMove);
@@ -7286,7 +7286,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
           bookings[i].group_id = group.id;
         }
 
-        await supa.from("bookings").update({ group_id: group.id }).in("id", ids);
+        await supa.from("bookings").update({group_id: group.id}).in("id", ids);
 
         selected = [];
         pal.style.display = "none";
@@ -7328,8 +7328,8 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       weekEnd.setDate(weekStart.getDate() + 7);
 
       const fixedLegend = [
-        { color: "pink", text: "Deluxe" },
-        { color: "orange", text: "Arrangement" }
+        {color: "pink", text: "Deluxe"},
+        {color: "orange", text: "Arrangement"}
       ];
 
       fixedLegend.forEach((item) => {
@@ -7659,7 +7659,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         return;
       }
 
-      const { error } = await supa.from("group_files").delete().eq("id", fileId);
+      const {error} = await supa.from("group_files").delete().eq("id", fileId);
 
       if (error) {
         console.error(error);
@@ -7686,7 +7686,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         return; // nichts geändert
       }
 
-      const { error } = await supa
+      const {error} = await supa
         .from("groups")
         .update({
           start: calc.start,
@@ -7718,7 +7718,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         return; // nichts geändert
       }
 
-      const { error } = await supa
+      const {error} = await supa
         .from("groups")
         .update({
           count_ez: stats.ez,
@@ -7856,7 +7856,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       fileContainer.innerHTML = info + "Lade...";
       box.style.display = "block";
 
-      const { data, error } = await supa.from("group_files").select("*").eq("group_id", groupId);
+      const {data, error} = await supa.from("group_files").select("*").eq("group_id", groupId);
 
       if (error) {
         fileContainer.innerHTML = info + "Fehler beim Laden";
@@ -7942,7 +7942,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       let newName = group.name.replace(/^Option:\s*/, "");
 
-      const { error } = await supa
+      const {error} = await supa
         .from("groups")
         .update({
           color: newColor,
@@ -7994,7 +7994,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       try {
 
-        const { error } = await supa
+        const {error} = await supa
           .from("bookings")
           .update({
             checkin: true,
@@ -8138,7 +8138,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         let cleanName = sanitizeFileName(file.name);
         let filePath = `${groupId}/${Date.now()}_${cleanName}`;
 
-        const { data: uploadData, error: uploadError } = await supa.storage
+        const {data: uploadData, error: uploadError} = await supa.storage
           .from("group-files")
           .upload(filePath, file);
 
@@ -8147,7 +8147,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
           continue;
         }
 
-        const { data: urlData, error: urlError } = await supa.storage
+        const {data: urlData, error: urlError} = await supa.storage
           .from("group-files")
           .createSignedUrl(filePath, 60 * 60);
 
@@ -8176,7 +8176,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }
 
     async function createGroup(name, color, extra = {}) {
-      const { data: userData } = await supa.auth.getUser();
+      const {data: userData} = await supa.auth.getUser();
       const user = userData.user;
 
       let insertObj = {
@@ -8196,7 +8196,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         insertObj.guests_total = extra.stats.guests;
       }
 
-      const { data, error } = await supa.from("groups").insert([insertObj]).select().single();
+      const {data, error} = await supa.from("groups").insert([insertObj]).select().single();
 
       if (error) {
         console.error(error);
@@ -8232,7 +8232,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }
 
     async function loadData() {
-      let { data, error } = await supa.from("bookings").select("*");
+      let {data, error} = await supa.from("bookings").select("*");
 
       if (!error) {
         bookings = data.map((b) => ({
@@ -8245,7 +8245,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }
     supa
       .channel("live-bookings")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, (payload) => {
+      .on("postgres_changes", {event: "*", schema: "public", table: "bookings"}, (payload) => {
         if (isRestoring || isDeleting || isDraggingUpdate || isResizingUpdate) {
           return;
         }
@@ -8331,7 +8331,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
     function handleRealtimeUpdate(payload) {
 
-      const { eventType, new: newRow, old: oldRow } = payload;
+      const {eventType, new: newRow, old: oldRow} = payload;
 
       if (eventType === "INSERT") {
 
@@ -8350,7 +8350,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       if (eventType === "UPDATE") {
         bookings = bookings.map((b) =>
           b.id == newRow.id
-            ? { ...newRow, row: Number(newRow.row) }
+            ? {...newRow, row: Number(newRow.row)}
             : b
         );
       }
@@ -8437,10 +8437,10 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       try {
 
-        const { data: bookingsData, error: bookingsError } =
+        const {data: bookingsData, error: bookingsError} =
           await supa.from("bookings").select("*");
 
-        const { data: groupsData, error: groupsError } =
+        const {data: groupsData, error: groupsError} =
           await supa.from("groups").select("*");
 
         if (bookingsError) {
@@ -8463,7 +8463,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
         const jsonBlob = new Blob(
           [JSON.stringify(backupData, null, 2)],
-          { type: "application/json" }
+          {type: "application/json"}
         );
 
         const jsonUrl = URL.createObjectURL(jsonBlob);
@@ -8500,7 +8500,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       try {
 
-        const { data, error } = await supa
+        const {data, error} = await supa
           .from("backup_meta")
           .select("*")
           .eq("id", 1)
@@ -8553,7 +8553,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       if (!supa) return;
 
-      const { data } = await supa.auth.getUser();
+      const {data} = await supa.auth.getUser();
       const user = data.user;
 
       if (!user) return;
@@ -8594,7 +8594,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       render();
 
       lastChangeTime = Date.now();
-      const { data, error } = await supa.from("bookings").insert([b]).select();
+      const {data, error} = await supa.from("bookings").insert([b]).select();
 
 
       if (error) {
@@ -8683,7 +8683,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       try {
 
-        const { error } = await supa
+        const {error} = await supa
           .from("bookings")
           .delete()
           .in("id", ids);
@@ -9062,7 +9062,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }
 
     async function enrichWithUser(dataArray) {
-      const { data } = await supa.auth.getUser();
+      const {data} = await supa.auth.getUser();
       const user = data.user;
 
       if (!user) throw new Error("Nicht eingeloggt");
@@ -9083,7 +9083,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         let tempBookings = bookings
           .filter((b) => String(b.id).startsWith("tmp_"))
           .map((b) => {
-            let copy = { ...b };
+            let copy = {...b};
             delete copy.id;
             return copy;
           });
@@ -9092,7 +9092,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
         let clean = await enrichWithUser(tempBookings);
 
-        const { data, error } = await supa
+        const {data, error} = await supa
           .from("bookings")
           .insert(clean)
           .select();
@@ -9129,7 +9129,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
       lastChangeTime = Date.now();
 
-      const { data: userData } = await supa.auth.getUser();
+      const {data: userData} = await supa.auth.getUser();
       const user = userData.user;
 
       if (!user) {
@@ -9138,7 +9138,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       }
 
       let clean = list.map((b) => {
-        let copy = { ...b };
+        let copy = {...b};
         delete copy.id;
 
         return {
@@ -9147,7 +9147,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         };
       });
 
-      const { data, error } = await supa.from("bookings").insert(clean).select();
+      const {data, error} = await supa.from("bookings").insert(clean).select();
 
       if (error) {
         console.error(error);
@@ -9408,7 +9408,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
         updateRestoreOverlay("Alte Buchungen löschen...");
 
-        const { error: bookingDeleteError } = await supa
+        const {error: bookingDeleteError} = await supa
           .from("bookings")
           .delete()
           .not("id", "is", null);
@@ -9421,7 +9421,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
         updateRestoreOverlay("Alte Gruppen löschen...");
 
-        const { error: groupDeleteError } = await supa
+        const {error: groupDeleteError} = await supa
           .from("groups")
           .delete()
           .not("id", "is", null);
@@ -9435,12 +9435,12 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         updateRestoreOverlay("Gruppen importieren...");
 
         const groups = loadedBackup.groups.map(g => {
-          const copy = { ...g };
+          const copy = {...g};
           delete copy.created_at;
           return copy;
         });
 
-        const { error: groupInsertError } = await supa
+        const {error: groupInsertError} = await supa
           .from("groups")
           .insert(groups);
 
@@ -9453,13 +9453,13 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         updateRestoreOverlay("Buchungen importieren...");
 
         const bookings = loadedBackup.bookings.map(b => {
-          const copy = { ...b };
+          const copy = {...b};
           delete copy.created_at;
           delete copy.updated_at;
           return copy;
         });
 
-        const { error: bookingInsertError } = await supa
+        const {error: bookingInsertError} = await supa
           .from("bookings")
           .insert(bookings);
 
