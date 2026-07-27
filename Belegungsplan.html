@@ -5358,7 +5358,7 @@ ${d.toLocaleDateString("de-DE", {
       let end = new Date(document.getElementById("f_end").value);
       let price = document.getElementById("f_price").value.trim();
 
-      if (!price) {
+      if (!price && guests !== "BLOCK") {
         return alert("Preis ist ein Pflichtfeld");
       }
 
@@ -6396,9 +6396,21 @@ ${renderGroupBadge(groupsMap[b.group_id])}
           mobileGuests = "1";
         }
 
+        const displayName = b.name
+          ? b.name
+          : (group
+            ? `<span style="font-size:0.6em;">${group.name}</span>`
+            : "");
+
+
+
         if (isMobile) {
           if (b.guests === "BLOCK") {
-            txt.innerHTML = "🚫";
+            if (b.name.toLowerCase() !== "wc") {
+              txt.innerHTML = "🚫";
+            } else {
+              txt.innerHTML = "🚽";
+            }
           } else {
             if (!isAdmin()) {
               txt.innerHTML = ``;
@@ -6408,9 +6420,13 @@ ${renderGroupBadge(groupsMap[b.group_id])}
           }
         } else {
           if (b.guests === "BLOCK") {
-            txt.innerHTML = "🚫 BLOCKIERT";
+            if (b.name.toLowerCase() !== "wc") {
+              txt.innerHTML = "🚫 BLOCKIERT";
+            } else {
+              txt.innerHTML = "🚽 Toilette"
+            }
           } else {
-            txt.innerHTML = `${paidIcon}${b.guests} ${b.name || (group ? group.name : "")}${companyText}${icons}${commentText}`;
+            txt.innerHTML = `${paidIcon}${b.guests} ${displayName}${companyText}${icons}${commentText}`;
           }
         }
 
