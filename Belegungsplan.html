@@ -5921,15 +5921,17 @@ ${d.toLocaleDateString("de-DE", {
         extra += "👶".repeat(b.crib_count || 1);
       }
 
-      let nightlyPrice = b.price;
+      const price = parseFloat(
+        String(b.price || "").replace(",", ".")
+      );
 
-      if (!isNaN(parseFloat(b.price))) {
-        nightlyPrice = Number(b.price).toFixed(2);
+      let nightlyPrice = b.price;
+      if (!isNaN(price)) {
+        nightlyPrice = price.toFixed(2);
       }
 
       let totalPrice = b.price;
-
-      if (!isNaN(parseFloat(b.price))) {
+      if (!isNaN(price)) {
         let nights =
           Math.round(
             (new Date(b.end) - new Date(b.start)) /
@@ -5937,8 +5939,9 @@ ${d.toLocaleDateString("de-DE", {
           );
 
         totalPrice =
-          (parseFloat(b.price) * nights).toFixed(2);
+          (price * nights).toFixed(2);
       }
+
 
       let html = `
       <b>🚪 Zimmer:</b>${roomNumber}<br>
@@ -5947,8 +5950,8 @@ ${d.toLocaleDateString("de-DE", {
     <b>🏢 Firma:</b>${b.company || "-"}<br>
     <b>📅 Anreise:</b>${start}<br>
     <b>📅 Abreise:</b>${end}<br>
-    <b>💲 Preis pro Nacht:</b>${nightlyPrice} €<br>
-    <b>💰 Gesamtpreis:</b>${totalPrice} €<br>
+    <b>💲 Preis pro Nacht:</b>${nightlyPrice} ${isNaN(nightlyPrice) ? "" : "€"}<br>
+    <b>💰 Gesamtpreis:</b>${totalPrice} ${isNaN(totalPrice) ? "" : "€"}<br>
     <b>💬 Kommentar:</b>${b.comment || "-"}<br>
     <b>✨ Extrainfo:</b>${extra || "-"}<br>
 
@@ -6422,21 +6425,26 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
         if (!b.price || isMobile) {
           pr.innerHTML = "";
-        } else if (isNaN(b.price)) {
-          pr.innerHTML = b.price;
         } else {
-          let nights =
-            Math.round(
-              (new Date(b.end) - new Date(b.start)) /
-              (1000 * 60 * 60 * 24)
-            );
+          const price = parseFloat(
+            String(b.price).replace(",", ".")
+          );
 
-          let totalPrice =
-            (parseFloat(b.price || 0) * nights).toFixed(2);
+          if (isNaN(price)) {
+            pr.innerHTML = b.price;
+          } else {
+            let nights =
+              Math.round(
+                (new Date(b.end) - new Date(b.start)) /
+                (1000 * 60 * 60 * 24)
+              );
 
-          pr.innerHTML = totalPrice + "€";
+            let totalPrice =
+              (price * nights).toFixed(2);
+
+            pr.innerHTML = totalPrice + "€";
+          }
         }
-
         let r = document.createElement("div");
         r.className = "handle right";
         r.onmousedown = (e) => {
