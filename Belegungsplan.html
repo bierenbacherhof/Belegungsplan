@@ -4135,6 +4135,11 @@ window.onload = () => {
               (1000 * 60 * 60 * 24)
             );
 
+          let untilDate = end.toLocaleDateString("de-DE", {
+            day: "2-digit",
+            month: "2-digit"
+          });
+
           let breakfastText = "";
           if (!b.breakfast) {
             breakfastText = "<b> o. Fr.</b>";
@@ -4152,8 +4157,8 @@ window.onload = () => {
           if (b.bluecard && b.bluecard_count) {
             bluecardText =
               b.bluecard_count === 1
-                ? "1 blaue Karte"
-                : `${b.bluecard_count} blaue Karten`;
+                ? "bl. K."
+                : `${b.bluecard_count} bl. K.`;
           }
 
           let cribText = "";
@@ -4180,7 +4185,7 @@ window.onload = () => {
   <td>${b.guests}</td>
   <td>${(rooms[b.row] || "").split(" - ")[0]}</td>
   <td>
-    ${duration} ${duration !== 1 ? "Nächte" : "Nacht"}
+    ${duration} ${duration !== 1 ? "Nächte" : "Nacht"} (bis ${untilDate})
     ${extras ? " - " + extras : ""}
     ${comment}
   </td>
