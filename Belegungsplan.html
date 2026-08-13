@@ -6106,6 +6106,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }
 
     function draw() {
+     
       document.querySelectorAll(".booking").forEach((e) => e.remove());
 
       let weekStart = normalizeDate(startOfWeek(current));
@@ -6116,6 +6117,10 @@ ${renderGroupBadge(groupsMap[b.group_id])}
 
         let diffStart = Math.floor((bStart - weekStart) / (1000 * 60 * 60 * 24));
         let diffEnd = Math.floor((bEnd - weekStart) / (1000 * 60 * 60 * 24));
+
+
+       
+
 
         if (diffEnd <= 0) {
           let endsExactlyAtStart = diffEnd === 0;
@@ -6131,7 +6136,11 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         let endsAfterWeek = diffEnd >= 7;
 
         let row = document.querySelectorAll("tr")[b.row + 1];
-        if (!row) return;
+
+        if (!row) {
+          console.warn("Ungültige Zeile", b);
+          return;
+        }
 
         let cell = row.children[visStart + 1];
 
@@ -8236,16 +8245,42 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }
 
     async function loadData() {
-      let { data, error } = await supa.from("bookings").select("*");
 
-      if (!error) {
-        bookings = data.map((b) => ({
-          ...b,
-          row: Number(b.row)
-        }));
+      let allBookings = [];
+      let from = 0;
+      const batchSize = 1000;
 
-        render();
+      while (true) {
+
+        let { data, error } = await supa
+          .from("bookings")
+          .select("*")
+          .range(from, from + batchSize - 1);
+
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+        if (!data || data.length === 0) {
+          break;
+        }
+
+        allBookings.push(...data);
+
+        if (data.length < batchSize) {
+          break;
+        }
+
+        from += batchSize;
       }
+
+      bookings = allBookings.map(b => ({
+        ...b,
+        row: Number(b.row)
+      }));
+
+      render();
     }
     supa
       .channel("live-bookings")
