@@ -3074,6 +3074,7 @@ extra Räume
       <button id="printConfirm">OK</button>
       <button id="printCancel">Abbrechen</button>
       <button id="weekendPrint" onclick="printWeekendLists();">Wochenendlisten</button>
+      <button id="nextWeekHK">Housekeeping nächste Woche</button>
     </div>
   `;
 
@@ -3398,6 +3399,16 @@ window.onload = () => {
         });
       });
 
+      document.getElementById("nextWeekHK").onclick = () => {
+        const date = document.getElementById("printDate").value;
+
+        if (!date) {
+          alert("Bitte zuerst ein Datum auswählen.");
+          return;
+        }
+
+        printHousekeepingNextWeek(date);
+      };
 
     }
 
@@ -3910,6 +3921,141 @@ window.onload = () => {
       });
 
       return `${html}`;
+    }
+
+    function printHousekeepingNextWeek(dateStr) {
+
+      const selectedDate = new Date(dateStr);
+      selectedDate.setHours(0, 0, 0, 0);
+
+      let startDate = startOfWeek(selectedDate);
+
+      startDate.setDate(startDate.getDate() + 7);
+      const weekdayNames = [
+        "Sonntag",
+        "Montag",
+        "Dienstag",
+        "Mittwoch",
+        "Donnerstag",
+        "Freitag",
+        "Samstag"
+      ];
+
+      const uniqueBookings = Object.values(
+        Object.fromEntries(bookings.map(b => [b.id, b]))
+      );
+
+      let html = `
+    <h1>Housekeeping nächste Woche</h1>
+  `;
+
+      for (let i = 0; i < 7; i++) {
+
+        const targetDate = new Date(startDate);
+        targetDate.setDate(startDate.getDate() + i);
+
+        const relevant = uniqueBookings.filter((b) => {
+
+          if (!isValidRoom(b.row)) return false;
+          if (b.guests === "BLOCK") return false;
+
+          let start = new Date(b.start);
+          let end = new Date(b.end);
+
+          start.setHours(0, 0, 0, 0);
+          end.setHours(0, 0, 0, 0);
+
+          return start <= targetDate && end >= targetDate;
+        });
+
+        let neu = [];
+        let zuleger = [];
+        let kontrolle = [];
+
+        relevant.forEach((b) => {
+
+          let start = new Date(b.start);
+          let end = new Date(b.end);
+
+          start.setHours(0, 0, 0, 0);
+          end.setHours(0, 0, 0, 0);
+
+          if (start.getTime() === targetDate.getTime()) {
+            kontrolle.push(b);
+            return;
+          }
+
+          if (end.getTime() === targetDate.getTime()) {
+            neu.push(b);
+            return;
+          }
+
+          if (start < targetDate && end > targetDate) {
+            zuleger.push(b);
+          }
+        });
+
+        const neuRows = new Set(neu.map(b => b.row));
+
+        kontrolle = kontrolle.filter(
+          b => !neuRows.has(b.row)
+        );
+
+        html += `
+      <div style="margin-bottom:35px;">
+        <div style="
+          font-weight:bold;
+          text-decoration:underline;
+          font-size:22px;
+          margin-bottom:12px;
+        ">
+          ${weekdayNames[targetDate.getDay()]}
+        </div>
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          width:500px;
+          font-size:20px;
+        ">
+          <div><b>Neu:</b> ${neu.length}</div>
+          <div><b>Zuleger:</b> ${zuleger.length}</div>
+          <div><b>Kontrolle:</b> ${kontrolle.length}</div>
+        </div>
+      </div>
+    `;
+      }
+
+      const printHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Housekeeping nächste Woche</title>
+<style>
+body{
+  font-family:Arial;
+  padding:40px;
+}
+</style>
+</head>
+<body>
+${html}
+<script>
+window.onload = () => window.print();
+<\/script>
+</body>
+</html>
+`;
+
+      const win = window.open(
+        "",
+        "_blank",
+        "width=1000,height=900"
+      );
+
+      win.document.write(printHtml);
+      win.document.close();
     }
 
     function buildBreakfastHTML(dateStr) {
@@ -6106,7 +6252,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }
 
     function draw() {
-     
+
       document.querySelectorAll(".booking").forEach((e) => e.remove());
 
       let weekStart = normalizeDate(startOfWeek(current));
@@ -6119,7 +6265,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         let diffEnd = Math.floor((bEnd - weekStart) / (1000 * 60 * 60 * 24));
 
 
-       
+
 
 
         if (diffEnd <= 0) {
@@ -7812,6 +7958,20 @@ ${renderGroupBadge(groupsMap[b.group_id])}
   </div>
 `;
 
+      const hasBluecards = groupBookings.some(b => b.bluecard);
+
+      info += `
+<label style="display:block; margin-top:10px;">
+  <input
+    type="checkbox"
+    id="groupBluecardToggle"
+    ${hasBluecards ? "checked" : ""}
+    onchange="toggleGroupBluecards('${groupId}', this.checked)"
+  >
+  Blaue Karten 🟦
+</label>
+`;
+
       let showCheckinBtn = !isMobile && currentRole !== "read";
 
       let isOption = group.name.startsWith("Option:");
@@ -8052,6 +8212,45 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       }
 
       openGroupInfo(groupId);
+    }
+
+    async function toggleGroupBluecards(groupId, enabled) {
+
+      const groupBookings = bookings.filter(
+        b => b.group_id === groupId
+      );
+
+      if (!groupBookings.length) {
+        return;
+      }
+
+      const user = currentUser;
+
+      // lokal aktualisieren
+      groupBookings.forEach(b => {
+        b.bluecard = enabled;
+        b.bluecard_count = enabled ? 1 : 0;
+        b.user_id = user?.id;
+      });
+
+      render();
+
+      const ids = groupBookings.map(b => b.id);
+
+      const { error } = await supa
+        .from("bookings")
+        .update({
+          bluecard: enabled,
+          bluecard_count: enabled ? 1 : 0,
+          user_id: user?.id
+        })
+        .in("id", ids);
+
+      if (error) {
+        console.error(error);
+        alert("Fehler beim Speichern");
+        return;
+      }
     }
 
     function setupUpload(groupId) {
