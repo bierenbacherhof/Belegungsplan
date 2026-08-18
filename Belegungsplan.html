@@ -8081,27 +8081,15 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       }
     }
 
-    function getFreeGroupColor(groupId) {
-
+    function getFreeGroupColor(groupId, start, end) {
       const blocked = ["yellow", "pink", "orange", "turquoise"];
 
-      let used = new Set();
-
-      bookings.forEach(b => {
-
-        if (b.group_id === groupId) return;
-
-        let g = groupsMap[b.group_id];
-        if (!g) return;
-
-        used.add(g.color);
-      });
+      let used = getUsedColorsInRange(start, end);
 
       return colors.find(
         c => !used.has(c) && !blocked.includes(c)
       );
     }
-
     async function convertOptionToBooking(groupId) {
 
       let group = groupsMap[groupId];
