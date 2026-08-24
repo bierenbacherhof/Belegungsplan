@@ -2041,6 +2041,9 @@
       let start = new Date(startVal);
       let end = new Date(endVal);
 
+      start.setHours(CHECKIN_HOUR, 0, 0, 0);
+      end.setHours(CHECKOUT_HOUR, 0, 0, 0);
+
       current = new Date(start);
       localStorage.setItem("calendar_current_week", current.toISOString());
       render();
@@ -9928,6 +9931,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
           updatePrices("nightly");
         });
     });
+
 
 
     requestAnimationFrame(updateStickyPositions);
