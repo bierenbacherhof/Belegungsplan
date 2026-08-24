@@ -3421,7 +3421,6 @@ window.onload = () => {
       const arrivals = uniqueBookings.filter((b) => {
         if (!isValidRoom(b.row)) return false;
         if (!b.start) return false;
-        if (b.checkin) return false;
         if (b.guests === "BLOCK") return false;
 
         const start = new Date(b.start);
@@ -5520,6 +5519,7 @@ ${d.toLocaleDateString("de-DE", {
       if (end <= start) return alert("Abreise muss nach Anreise liegen");
 
       if (editIndex === null) {
+
         if (newBookingRow === null) {
           let bookingData = {
             start,
@@ -5544,6 +5544,10 @@ ${d.toLocaleDateString("de-DE", {
           closeForm();
           startSinglePlacement(bookingData);
           return;
+        }
+
+        if (overlapDates(newBookingRow, start, end)) {
+          return alert("Zimmer ist im gewählten Zeitraum bereits belegt!");
         }
 
         let booking = {
@@ -6567,7 +6571,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
             }
           } else {
             if (!isAdmin()) {
-              txt.innerHTML = `${mobileGuests}`;
+              txt.innerHTML = ``;
             } else {
               txt.innerHTML = `${paidIcon}${mobileGuests}:${b.name}${companyText}${icons}`;
             }
@@ -8090,7 +8094,6 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         c => !used.has(c) && !blocked.includes(c)
       );
     }
-
     async function convertOptionToBooking(groupId) {
 
       let group = groupsMap[groupId];
