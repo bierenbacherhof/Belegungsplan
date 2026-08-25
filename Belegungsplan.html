@@ -6574,7 +6574,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
             }
           } else {
             if (!isAdmin()) {
-              txt.innerHTML = ``;
+              txt.innerHTML = `${mobileGuests}`;
             } else {
               txt.innerHTML = `${paidIcon}${mobileGuests}:${b.name}${companyText}${icons}`;
             }
