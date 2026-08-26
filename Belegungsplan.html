@@ -8088,15 +8088,24 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       }
     }
 
-    function getFreeGroupColor(groupId, start, end) {
-      const blocked = ["yellow", "pink", "orange", "turquoise"];
+    function getFreeGroupColor(groupId) {
+      const group = groupsMap[groupId];
+      if (!group) return null;
 
-      let used = getUsedColorsInRange(start, end);
+      const start = new Date(group.start);
+      const end = new Date(group.end);
+
+      const blocked = ["yellow", "pink", "orange", "turquoise"];
+      const used = getUsedColorsInRange(start, end, groupId);
+
+      // eigene aktuelle Farbe ignorieren
+      used.delete(group.color);
 
       return colors.find(
         c => !used.has(c) && !blocked.includes(c)
-      );
+      ) || null;
     }
+
     async function convertOptionToBooking(groupId) {
 
       let group = groupsMap[groupId];
@@ -9038,30 +9047,23 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       setInterval(runAllReminders, 5 * 60 * 1000); // alle 5 Minuten
     }
 
-    function getUsedColorsInRange(start, end) {
+    function getUsedColorsInRange(start, end, excludeGroupId = null) {
       let usedColors = new Set();
 
-      let currentDate = normalizeDate(start);
+      bookings.forEach(b => {
+        if (!b.group_id || b.group_id === excludeGroupId) return;
 
-      while (currentDate < end) {
-        let weekStart = normalizeDate(startOfWeek(currentDate));
-        let weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 7);
+        const group = groupsMap[b.group_id];
+        if (!group) return;
 
-        bookings.forEach((b) => {
-          let group = groupsMap[b.group_id];
-          if (!group) return;
+        const s = normalizeDate(b.start);
+        const e = normalizeDate(b.end);
 
-          let s = normalizeDate(b.start);
-          let e = normalizeDate(b.end);
-
-          if (s < weekEnd && e > weekStart) {
-            usedColors.add(group.color);
-          }
-        });
-
-        currentDate.setDate(currentDate.getDate() + 7);
-      }
+        // echte Überschneidung mit dem gewünschten Zeitraum
+        if (s < end && e > start) {
+          usedColors.add(group.color);
+        }
+      });
 
       return usedColors;
     }
