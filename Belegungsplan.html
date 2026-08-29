@@ -476,21 +476,55 @@
 
     #palette {
       position: fixed;
-      bottom: 20px;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
-      background: #fff;
-      padding: 10px;
+      transform: translate(-50%, -50%);
+      background: white;
       border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 15px;
       display: none;
       z-index: 15000;
+      min-width: 320px;
+      max-width: 420px;
+      max-height: 70vh;
+      overflow-y: auto;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, .25);
     }
 
-    #palette div {
+    .paletteTitle {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .paletteGroup {
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: block;
+      margin: 4px 0;
+      cursor: pointer;
+    }
+
+    .paletteGroup:hover {
+      filter: brightness(0.95);
+    }
+
+    .paletteSeparator {
+      margin: 12px 0;
+      border-top: 1px solid #ccc;
+    }
+
+    .paletteColors {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .paletteColor {
       width: 28px;
       height: 28px;
-      display: inline-block;
-      margin: 4px;
+      border-radius: 6px;
       cursor: pointer;
     }
 
@@ -2128,86 +2162,60 @@
       );
     }
 
-    function openColorPicker(data, start, end, floorPriority, groupName) {
+    function openColorPicker(
+      data,
+      start,
+      end,
+      floorPriority,
+      groupName
+    ) {
+
       colorPickerOpen = true;
 
-      let overlay = document.createElement("div");
-      overlay.id = "pickerOverlay";
+      showGroupPalette({
 
-      overlay.style = `
-  position:fixed;
-  top:0;
-  left:0;
-  right:0;
-  bottom:0;
-  background:rgba(0,0,0,0.3);
-  z-index:29999;
-`;
+        start,
+        end,
+        showCategories: false,
+        onCategoryClick: cat => {
 
-      document.body.appendChild(overlay);
-
-      overlay.onclick = () => {
-        closeColorPicker();
-      };
-
-      let used = getUsedColorsInRange(start, end);
-
-      let blocked = ["yellow", "pink", "orange", "turquoise"];
-
-      let freeColors = colors.filter((c) => !used.has(c) && !blocked.includes(c));
-
-      let box = document.createElement("div");
-      box.id = "colorPicker";
-
-      box.style = `
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    background:#fff;
-    padding:20px;
-    border:1px solid #ccc;
-    z-index:30000;
-    text-align:center;
-    border-radius:10px;
-  `;
-
-      let html = "<b>Farbe wählen</b><br><br>";
-
-      freeColors.forEach((c) => {
-        html += `
-      <div class="colorChoice"
-        data-color="${c}"
-        style="
-          display:inline-block;
-          width:30px;
-          height:30px;
-          background:${c};
-          margin:5px;
-          cursor:pointer;
-          border-radius:6px;
-        ">
-      </div>
-    `;
-      });
-
-      html += `
-    <br><br>
-    <button id="colorBack">← Zurück</button>
-  `;
-
-      box.innerHTML = html;
-      document.body.appendChild(box);
-      box.onclick = (e) => {
-        e.stopPropagation();
-      };
-
-      document.querySelectorAll(".colorChoice").forEach((el) => {
-        el.onclick = () => {
-          let color = el.dataset.color;
           colorPickerOpen = false;
-          document.getElementById("colorPicker").remove();
-          document.getElementById("pickerOverlay")?.remove();
+
+          pal.style.display = "none";
+
+          startPlacementMode(
+            data,
+            start,
+            end,
+            cat.color,
+            floorPriority,
+            groupName
+          );
+        },
+
+        onGroupClick: group => {
+
+          colorPickerOpen = false;
+
+          pal.style.display = "none";
+
+          startPlacementMode(
+            data,
+            start,
+            end,
+            group.color,
+            floorPriority,
+            group.name,
+            false,
+            group.id
+          );
+        },
+
+        onNewGroupColorClick: color => {
+
+          colorPickerOpen = false;
+
+          pal.style.display = "none";
 
           startPlacementMode(
             data,
@@ -2217,21 +2225,15 @@
             floorPriority,
             groupName
           );
-        };
+        }
+
       });
 
-      document.getElementById("colorBack").onclick = () => {
-        colorPickerOpen = false;
-        document.getElementById("colorPicker").remove();
-        document.getElementById("pickerOverlay")?.remove();
-
-        document.getElementById("bookingForm").style.display = "block";
-      };
     }
 
     let groupPlacement = null;
 
-    async function startPlacementMode(data, start, end, color, floorPriority, customName = null, isCompany = false) {
+    async function startPlacementMode(data, start, end, color, floorPriority, customName = null, isCompany = false, existingGroupId = null) {
       window.balconyWarningShown = false;
 
 
@@ -2245,7 +2247,11 @@
 
       let group = null;
 
-      if (!isCompany) {
+      if (existingGroupId) {
+
+        group = groupsMap[existingGroupId];
+
+      } else if (!isCompany) {
 
         group = await createGroup(
           groupName,
@@ -2258,8 +2264,8 @@
         );
 
         if (!group) return;
-      }
 
+      }
       groupPlacement = {
         data: JSON.parse(JSON.stringify(data)),
         start,
@@ -7364,103 +7370,111 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     ];
     let pal = document.getElementById("palette");
 
-    colors.forEach((c) => {
-      let d = document.createElement("div");
+    function rebuildGroupPalette() {
 
-      d.style.backgroundColor = c;
+      if (!selected.length) return;
 
-      if (c === "orange" || c === "pink" || c === "turquoise") {
-        d.innerHTML = `
-      <span style="
-        position:absolute;
-        left:50%;
-        top:50%;
-        transform:translate(-50%,-50%);
-        font-weight:bold;
-        pointer-events:none;
-      ">
-        ${c === "orange" ? "A" :
-            c === "pink" ? "D" :
-              "O"
-          }
-      </span>
-    `;
+      let start = null;
+      let end = null;
 
-        d.style.position = "relative";
+      for (const i of selected) {
+
+        const b = bookings[i];
+
+        const s = normalizeDate(b.start);
+        const e = normalizeDate(b.end);
+
+        if (!start || s < start) start = s;
+        if (!end || e > end) end = e;
       }
 
-      d.onclick = async (e) => {
-        e.stopPropagation();
+      showGroupPalette({
 
-        if (!selected.length) return;
+        start,
+        end,
 
-        let usedColors = getUsedColorsInWeek();
+        onCategoryClick: async cat => {
 
-        if (usedColors.has(c)) {
-          if (
-            !confirm("Farbe ist in dieser Woche bereits vergeben!\nSind Sie sicher, dass Sie sie Verwenden möchten?")
-          )
-            return;
-        }
+          let ids =
+            selected.map(i => bookings[i].id);
 
-        const simpleColors = ["yellow", "pink", "orange", "turquoise"];
-
-        if (simpleColors.includes(c)) {
           for (const i of selected) {
-            let b = bookings[i];
-
-            b.group_id = null;
-            b.color = c;
+            bookings[i].group_id = null;
+            bookings[i].color = cat.color;
           }
-
-          let ids = selected.map((i) => bookings[i].id);
 
           await supa
             .from("bookings")
             .update({
               group_id: null,
-              color: c
+              color: cat.color
             })
             .in("id", ids);
 
           selected = [];
+
           pal.style.display = "none";
+
           render();
-          return;
-        }
+        },
 
-        let existingGroup = findGroupByColorInWeek(c);
+        onGroupClick: async group => {
 
-        let group;
+          let ids =
+            selected.map(i => bookings[i].id);
 
-        if (existingGroup) {
-          // ✅ KEIN prompt → bestehende Gruppe nutzen
-          group = existingGroup;
-        } else {
-          // ✅ NUR hier Name abfragen
-          let name = prompt("Gruppenname");
+          for (const i of selected) {
+            bookings[i].group_id = group.id;
+          }
+
+          await supa
+            .from("bookings")
+            .update({
+              group_id: group.id
+            })
+            .in("id", ids);
+
+          selected = [];
+
+          pal.style.display = "none";
+
+          render();
+        },
+
+        onNewGroupColorClick: async color => {
+
+          let name =
+            prompt("Gruppenname");
+
           if (!name) return;
 
-          group = await createGroup(name, c);
+          let group =
+            await createGroup(name, color);
+
           if (!group) return;
+
+          let ids =
+            selected.map(i => bookings[i].id);
+
+          for (const i of selected) {
+            bookings[i].group_id = group.id;
+          }
+
+          await supa
+            .from("bookings")
+            .update({
+              group_id: group.id
+            })
+            .in("id", ids);
+
+          selected = [];
+
+          pal.style.display = "none";
+
+          render();
         }
-
-        // ✅ Buchungen zuordnen
-        let ids = selected.map((i) => bookings[i].id);
-
-        for (const i of selected) {
-          bookings[i].group_id = group.id;
-        }
-
-        await supa.from("bookings").update({ group_id: group.id }).in("id", ids);
-
-        selected = [];
-        pal.style.display = "none";
-        render();
-      };
-
-      pal.appendChild(d);
-    });
+      });
+    }
 
     function closeColorPicker() {
       colorPickerOpen = false;
@@ -7601,29 +7615,6 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       requestAnimationFrame(updateStickyPositions);
     }
 
-    function findGroupByColorInWeek(color) {
-      let weekStart = normalizeDate(startOfWeek(current));
-      let weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
-
-      for (let b of bookings) {
-        if (!b.group_id) continue;
-
-        let group = groupsMap[b.group_id];
-        if (!group) continue;
-
-        let s = normalizeDate(b.start);
-        let e = normalizeDate(b.end);
-
-        let overlaps = s < weekEnd && e > weekStart;
-
-        if (overlaps && group.color === color) {
-          return group;
-        }
-      }
-
-      return null;
-    }
 
     function updatePrices(changedField) {
       let start = document.getElementById("f_start").value;
@@ -8425,27 +8416,6 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       return data;
     }
 
-    function getUsedColorsInWeek() {
-      let usedColors = new Set();
-
-      let weekStart = normalizeDate(startOfWeek(current));
-      let weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 7);
-
-      bookings.forEach((b) => {
-        let group = groupsMap[b.group_id];
-        if (!group) return;
-
-        let s = normalizeDate(b.start);
-        let e = normalizeDate(b.end);
-
-        if (s < weekEnd && e > weekStart) {
-          usedColors.add(group.color);
-        }
-      });
-
-      return usedColors;
-    }
 
     async function loadData() {
 
@@ -9050,22 +9020,233 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     function getUsedColorsInRange(start, end, excludeGroupId = null) {
       let usedColors = new Set();
 
+      // Alle Kalenderwochen bestimmen, die der Zeitraum berührt
+      let firstWeek = startOfWeek(start);
+      let lastWeek = startOfWeek(end);
+
       bookings.forEach(b => {
         if (!b.group_id || b.group_id === excludeGroupId) return;
 
         const group = groupsMap[b.group_id];
         if (!group) return;
 
-        const s = normalizeDate(b.start);
-        const e = normalizeDate(b.end);
+        const bookingStart = normalizeDate(b.start);
+        const bookingEnd = normalizeDate(b.end);
 
-        // echte Überschneidung mit dem gewünschten Zeitraum
-        if (s < end && e > start) {
-          usedColors.add(group.color);
+        let week = new Date(firstWeek);
+
+        while (week <= lastWeek) {
+          let weekStart = normalizeDate(week);
+
+          let weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 7);
+
+          // Buchung liegt in einer der betroffenen Wochen
+          if (bookingStart < weekEnd && bookingEnd > weekStart) {
+            usedColors.add(group.color);
+            break;
+          }
+
+          week.setDate(week.getDate() + 7);
         }
       });
 
       return usedColors;
+    }
+
+    function getPaletteData(start, end) {
+
+      const groups = new Map();
+      const usedColors = new Set();
+
+      start = normalizeDate(start);
+      end = normalizeDate(end);
+
+      let firstWeek = normalizeDate(startOfWeek(start));
+      let lastWeek = normalizeDate(startOfWeek(end));
+
+      bookings.forEach(b => {
+
+        if (!b.group_id) return;
+
+        const group = groupsMap[b.group_id];
+
+        if (!group) return;
+
+        const bookingStart = normalizeDate(b.start);
+        const bookingEnd = normalizeDate(b.end);
+
+        let week = new Date(firstWeek);
+
+        while (week <= lastWeek) {
+
+          let weekStart = normalizeDate(week);
+
+          let weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekEnd.getDate() + 7);
+
+          if (
+            bookingStart < weekEnd &&
+            bookingEnd > weekStart
+          ) {
+
+            groups.set(group.id, group);
+            usedColors.add(group.color);
+
+            break;
+          }
+
+          week.setDate(week.getDate() + 7);
+        }
+
+      });
+
+      const blockedColors = [
+        "yellow",
+        "pink",
+        "orange",
+        "turquoise"
+      ];
+
+      const freeColors = colors.filter(
+        c =>
+          !usedColors.has(c) &&
+          !blockedColors.includes(c)
+      );
+
+      return {
+        groups: [...groups.values()],
+        usedColors,
+        freeColors
+      };
+    }
+
+    function showGroupPalette({
+      start,
+      end,
+      showCategories = true,
+      onCategoryClick,
+      onGroupClick,
+      onNewGroupColorClick
+    }) {
+
+      pal.innerHTML = "";
+
+      const palette = getPaletteData(start, end);
+
+      if (showCategories) {
+
+        let catTitle = document.createElement("div");
+        catTitle.className = "paletteTitle";
+        catTitle.textContent = "Kategorien";
+
+        pal.appendChild(catTitle);
+
+        [
+          { color: "yellow", text: "Normales Zimmer" },
+          { color: "pink", text: "Deluxe" },
+          { color: "orange", text: "Arrangement" },
+          { color: "turquoise", text: "Option" }
+        ].forEach(cat => {
+
+          let div = document.createElement("div");
+
+          div.className = "paletteGroup";
+          div.textContent = cat.text;
+
+          div.style.background = cat.color;
+          div.style.color =
+            isLightColor(cat.color)
+              ? "black"
+              : "white";
+
+          div.onclick = () => onCategoryClick?.(cat);
+
+          pal.appendChild(div);
+
+        });
+
+        let sep0 = document.createElement("div");
+        sep0.className = "paletteSeparator";
+        pal.appendChild(sep0);
+
+      }
+
+      // =====================
+      // Vorhandene Gruppen
+      // =====================
+
+      let title = document.createElement("div");
+
+      title.className = "paletteTitle";
+      title.textContent = "Vorhandene Gruppen";
+
+      pal.appendChild(title);
+
+      palette.groups
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(group => {
+
+          let div = document.createElement("div");
+
+          div.className = "paletteGroup";
+
+          div.textContent =
+            trimGroupNameMobile(group.name);
+
+          div.style.background = group.color;
+          div.style.color =
+            isLightColor(group.color)
+              ? "black"
+              : "white";
+
+          div.onclick =
+            () => onGroupClick?.(group);
+
+          pal.appendChild(div);
+        });
+
+      let sep = document.createElement("div");
+
+      sep.className = "paletteSeparator";
+
+      pal.appendChild(sep);
+
+      // =====================
+      // Neue Gruppe
+      // =====================
+
+      let freeTitle =
+        document.createElement("div");
+
+      freeTitle.className = "paletteTitle";
+      freeTitle.textContent = "Neue Gruppe";
+
+      pal.appendChild(freeTitle);
+
+      let colorRow =
+        document.createElement("div");
+
+      colorRow.className = "paletteColors";
+
+      pal.appendChild(colorRow);
+
+      palette.freeColors.forEach(color => {
+
+        let box =
+          document.createElement("div");
+
+        box.className = "paletteColor";
+        box.style.background = color;
+
+        box.onclick =
+          () => onNewGroupColorClick?.(color);
+
+        colorRow.appendChild(box);
+
+      });
+
+      pal.style.display = "block";
     }
 
     function getGroupsInWeek() {
@@ -9221,6 +9402,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         document.body.classList.remove("select-mode");
 
         if (selected.length) {
+          rebuildGroupPalette();
           document.getElementById("palette").style.display = "block";
         }
       }
