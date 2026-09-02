@@ -9131,7 +9131,21 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }) {
 
       pal.innerHTML = "";
+      const closeBtn = document.createElement("div");
+      closeBtn.innerHTML = "✕";
+      closeBtn.style.position = "absolute";
+      closeBtn.style.top = "10px";
+      closeBtn.style.right = "12px";
+      closeBtn.style.cursor = "pointer";
+      closeBtn.style.fontSize = "22px";
+      closeBtn.style.fontWeight = "bold";
+      closeBtn.style.lineHeight = "1";
+      closeBtn.onclick = () => {
+        pal.style.display = "none";
+        selected = [];
+      };
 
+      pal.appendChild(closeBtn);
       const palette = getPaletteData(start, end);
 
       if (showCategories) {
