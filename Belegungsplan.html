@@ -4836,9 +4836,11 @@ window.onload = function() {
         document.getElementById("loginBox").style.display = "none";
         document.getElementById("loginBlocker").style.display = "none";
 
-        await loadGroups();
-        await loadUserRole();
-        await loadUserMap();
+        await Promise.all([
+          loadGroups(),
+          loadUserRole(),
+          loadUserMap()
+        ]);
         const userDisplay = document.getElementById("currentUserDisplay");
         if (userDisplay) {
           userDisplay.textContent = userMap[user.id] || "";
@@ -7507,13 +7509,21 @@ ${renderGroupBadge(groupsMap[b.group_id])}
       let weekEnd = new Date(weekStart);
       weekEnd.setDate(weekStart.getDate() + 7);
 
+      const visibleBookings = bookings.filter((b) => {
+
+        let s = normalizeDate(b.start);
+        let e = normalizeDate(b.end);
+
+        return s < weekEnd && e > weekStart;
+      });
+
       const fixedLegend = [
         { color: "pink", text: "Deluxe" },
         { color: "orange", text: "Arrangement" }
       ];
 
       fixedLegend.forEach((item) => {
-        let exists = bookings.some((b) => {
+        let exists = visibleBookings.some((b) => {
           let s = normalizeDate(b.start);
           let e = normalizeDate(b.end);
 
@@ -7538,7 +7548,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         l.appendChild(div);
       });
 
-      let hasUngroupedOptions = bookings.some((b) => {
+      let hasUngroupedOptions = visibleBookings.some((b) => {
         let s = normalizeDate(b.start);
         let e = normalizeDate(b.end);
 
@@ -7563,7 +7573,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
         l.appendChild(div);
       }
 
-      bookings.forEach((b) => {
+      visibleBookings.forEach((b) => {
         let group = groupsMap[b.group_id];
         if (!group) return;
 
@@ -8575,23 +8585,20 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }
 
 
-    let renderScheduled = false;
+    let renderTimer = null;
 
     function scheduleRender() {
 
-      if (renderScheduled) return;
+      clearTimeout(renderTimer);
 
-      renderScheduled = true;
-
-      requestAnimationFrame(() => {
-
-        renderScheduled = false;
+      renderTimer = setTimeout(() => {
 
         render();
         drawLegend();
 
-      });
+      }, 250);
     }
+
     function exportToExcel(bookingsData, groupsData) {
       const workbook = XLSX.utils.book_new();
 
@@ -9131,21 +9138,7 @@ ${renderGroupBadge(groupsMap[b.group_id])}
     }) {
 
       pal.innerHTML = "";
-      const closeBtn = document.createElement("div");
-      closeBtn.innerHTML = "✕";
-      closeBtn.style.position = "absolute";
-      closeBtn.style.top = "10px";
-      closeBtn.style.right = "12px";
-      closeBtn.style.cursor = "pointer";
-      closeBtn.style.fontSize = "22px";
-      closeBtn.style.fontWeight = "bold";
-      closeBtn.style.lineHeight = "1";
-      closeBtn.onclick = () => {
-        pal.style.display = "none";
-        selected = [];
-      };
 
-      pal.appendChild(closeBtn);
       const palette = getPaletteData(start, end);
 
       if (showCategories) {
